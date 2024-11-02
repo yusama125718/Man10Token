@@ -1,0 +1,13 @@
+mysql:
+  host: "localhost"
+  port: "3306"
+  user: "root"
+  pass: ""
+  db: "man10_token"
+
+prefix: "§r§l[§2§lM§e§lToken§r§l]§r "
+system: false
+trade: false
+token_name:
+  charge: sample
+  trade: sample

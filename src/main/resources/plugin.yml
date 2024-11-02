@@ -2,3 +2,11 @@ name: Man10Token
 version: '1.0'
 main: yusama125718.man10Token.Man10Token
 api-version: '1.20'
+
+commands:
+  mtoken:
+    description: Man10Token
+
+permissions:
+  mtoken.op:
+    default: op
