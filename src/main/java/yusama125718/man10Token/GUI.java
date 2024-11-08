@@ -87,13 +87,23 @@ public class GUI {
                     inv.setItem(i, d_item);
                     break;
 
+                // 全体制限変更
+                case 15:
+                    inv.setItem(i, GetItem(Material.BLUE_STAINED_GLASS_PANE, "全体での交換数の上限を変更する", 1));
+                    break;
+
+                // 個人制限変更
+                case 24:
+                    inv.setItem(i, GetItem(Material.BLUE_STAINED_GLASS_PANE, "個人での交換数の上限を変更する", 1));
+                    break;
+
                 // 交換ボタン
                 case 31:
                     if(t.state) inv.setItem(i, GetItem(Material.EMERALD_BLOCK, "交換中 [クリックで交換停止]", 1));
                     else inv.setItem(i, GetItem(Material.REDSTONE_BLOCK, "交換停止中 [クリックで交換開始]", 1));
                     break;
 
-                // score
+                // token
                 case 33:
                     inv.setItem(i, GetItem(Material.EMERALD, "必用トークンを編集する 必要トークン：" + t.cost, 1));
                     break;
@@ -112,7 +122,7 @@ public class GUI {
         p.openInventory(inv);
     }
 
-    public static void OpenCreateGUI(Player p, String name){
+    public static void OpenCreateGUI(Player p, String name, Integer cost){
         Inventory inv = Bukkit.createInventory(null,36, Component.text("[Man10TokenEdit] 新規作成 " + name));
         for (int i = 0; i < 36; i++){
             switch (i){
@@ -123,6 +133,10 @@ public class GUI {
                 // 決定ボタン
                 case 31:
                     inv.setItem(i, GetItem(Material.EMERALD_BLOCK, "保存", 1));
+                    break;
+
+                case 35:
+                    inv.setItem(i, GetItem(Material.WHITE_STAINED_GLASS_PANE, cost.toString(), 1));
                     break;
 
                 default:
@@ -146,18 +160,14 @@ public class GUI {
                     break;
 
                 // アイテムスロット
-                case 12:
+                case 13:
                     ItemStack item;
                     item = t.item;
                     inv.setItem(i, item);
                     break;
 
-                case 15:
-                    inv.setItem(i, GetItem(Material.RED_STAINED_GLASS_PANE, "コマンドを表示",1));
-                    break;
-
                 // 決定ボタン
-                case 30:
+                case 31:
                     inv.setItem(i, GetItem(Material.EMERALD_BLOCK, "保存", 1));
                     break;
 

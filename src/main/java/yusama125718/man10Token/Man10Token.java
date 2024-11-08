@@ -16,6 +16,7 @@ public final class Man10Token extends JavaPlugin {
     public static JavaPlugin mtoken;
     public static Boolean system = false;
     public static Boolean trade = false;
+    public static Boolean charge = false;
     public static String prefix;
     public static String token_charge = "unknown";
     public static String token_trade = "unknown";
@@ -27,26 +28,25 @@ public final class Man10Token extends JavaPlugin {
     @Override
     public void onEnable() {
         mtoken = this;
+        new Event(this);
         getCommand("mtoken").setExecutor(new Command());
         SetupConfig();
         MySQLManager mysql = new MySQLManager(mtoken, "man10_token");
         mysql.execute("create table if not exists token_logs(id int auto_increment, time varchar(35), token_data_id int, mcid varchar(16), uuid varchar(36), diff int, note varchar(90), primary key(id))");
         mysql.execute("create table if not exists trade_logs(id int auto_increment, time varchar(35), token_data_id int, token_logs_id int, item_name varchar(20), mcid varchar(16), uuid varchar(36), primary key(id))");
-        mysql.execute("create table if not exists token_data(id int auto_increment, create_at varchar(35), update_at varchar(35), token_name varchar(20), mcid varchar(16), uuid varchar(36), value int, primary key(id))");
+        mysql.execute("create table if not exists token_data(id int auto_increment, create_at varchar(35), update_at varchar(35), token_name varchar(50), mcid varchar(16), uuid varchar(36), value int, primary key(id))");
     }
 
     public static class TradeItem{
         public String name;
-        public String token;
         public Boolean state;
         public ItemStack item;
         public Integer cost;
         public Integer max_personal;
         public Integer max_all;
 
-        public TradeItem(String NAME, String TOKEN, Boolean STATE, ItemStack ITEM, Integer COST, Integer MAX_P, Integer MAX_A){
+        public TradeItem(String NAME, Boolean STATE, ItemStack ITEM, Integer COST, Integer MAX_P, Integer MAX_A){
             name = NAME;
-            token = TOKEN;
             state = STATE;
             item = ITEM;
             cost = COST;
@@ -60,6 +60,7 @@ public final class Man10Token extends JavaPlugin {
         folder = new File(mtoken.getDataFolder().getAbsolutePath() + File.separator + "items");
         system = mtoken.getConfig().getBoolean("system");
         trade = mtoken.getConfig().getBoolean("trade");
+        charge = mtoken.getConfig().getBoolean("charge");
         prefix = mtoken.getConfig().getString("prefix");
         token_charge = mtoken.getConfig().getString("token_name.charge");
         token_trade = mtoken.getConfig().getString("token_name.trade");
@@ -88,7 +89,7 @@ public final class Man10Token extends JavaPlugin {
                     Bukkit.broadcast(Component.text(prefix + file.getName() + "の読み込みに失敗しました"), "mtoken.op");
                     continue;
                 }
-                items.add(new TradeItem(file.getName(), config.getString("token"), config.getBoolean("state"), config.getItemStack("item"), config.getInt("cost"), config.getInt("max_personal"), config.getInt("max_all")));
+                items.add(new TradeItem(file.getName(), config.getBoolean("state"), config.getItemStack("item"), config.getInt("cost"), config.getInt("max_personal"), config.getInt("max_all")));
             }
         }
     }

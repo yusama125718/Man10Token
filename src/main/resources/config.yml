@@ -8,6 +8,8 @@ mysql:
 prefix: "§r§l[§2§lM§e§lToken§r§l]§r "
 system: false
 trade: false
+charge: false
+# token_nameは50文字まで
 token_name:
   charge: sample
   trade: sample
