@@ -80,12 +80,20 @@ public class Event implements Listener {
                             ResultSet res = mysql.query("SELECT id, update_at, mcid, uuid, value FROM token_data WHERE uuid = '" + e.getWhoClicked().getUniqueId() + "' AND token_name = '" + token_charge + "' LIMIT 1;");
                             if (res == null) {
                                 e.getWhoClicked().sendMessage(Component.text(prefix + "DBの取得に失敗しました"));
-                                mysql.close();
+                                try {
+                                    mysql.close();
+                                } catch (NullPointerException throwables) {
+                                    throwables.printStackTrace();
+                                }
                                 return;
                             }
                             if (!res.next()) {
                                 e.getWhoClicked().sendMessage(Component.text(prefix + "トークンデータが存在しません"));
-                                mysql.close();
+                                try {
+                                    mysql.close();
+                                } catch (NullPointerException throwables) {
+                                    throwables.printStackTrace();
+                                }
                                 return;
                             }
                             int token_id = res.getInt("id");
@@ -102,7 +110,11 @@ public class Event implements Listener {
                                 if (res != null && res.next()){
                                     int global = res.getInt("global");
                                     int personal = res.getInt("personal");
-                                    mysql.close();
+                                    try {
+                                        mysql.close();
+                                    } catch (NullPointerException throwables) {
+                                        throwables.printStackTrace();
+                                    }
                                     if ((target.max_all != 0 && global >= target.max_all) || (target.max_personal != 0 && personal >= target.max_personal)){
                                         e.getWhoClicked().sendMessage(Component.text(prefix + "取引数が最大数に達しています"));
                                         e.getWhoClicked().closeInventory();
@@ -111,7 +123,11 @@ public class Event implements Listener {
                                 }
                                 else {
                                     e.getWhoClicked().sendMessage(Component.text(prefix + "DBの取得に失敗しました"));
-                                    mysql.close();
+                                    try {
+                                        mysql.close();
+                                    } catch (NullPointerException throwables) {
+                                        throwables.printStackTrace();
+                                    }
                                     return;
                                 }
                             }

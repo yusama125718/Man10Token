@@ -44,13 +44,31 @@ public class Command implements CommandExecutor, TabCompleter {
                         MySQLManager mysql = new MySQLManager(mtoken, "mtoken");
                         try{
                             ResultSet res = mysql.query("SELECT value FROM token_data WHERE uuid = '"+ ((Player) sender).getUniqueId() +"' AND token_name = '"+ token_trade +"' LIMIT 1;");
+                            if (res == null){
+                                sender.sendMessage(Component.text(prefix + "DBの取得に失敗しました"));
+                                try {
+                                    mysql.close();
+                                } catch (NullPointerException throwables) {
+                                    throwables.printStackTrace();
+                                }
+                                return;
+                            }
                             if (!res.next()){
-                                mysql.close();
+                                try {
+                                    mysql.close();
+                                } catch (NullPointerException throwables) {
+                                    throwables.printStackTrace();
+                                }
                                 sender.sendMessage(Component.text(prefix + "データがありません"));
                                 return;
                             }
                             int value = res.getInt("value");
                             sender.sendMessage(prefix + "現在の交換に使用できるトークンは"+ value +"です");
+                            try {
+                                mysql.close();
+                            } catch (NullPointerException throwables) {
+                                throwables.printStackTrace();
+                            }
                         }
                         catch (SQLException ex) {
                             sender.sendMessage(Component.text(prefix + "DBの取得に失敗しました"));
@@ -97,19 +115,19 @@ public class Command implements CommandExecutor, TabCompleter {
                     return true;
                 }
                 if (args[0].equals("help")) {
-                    sender.sendMessage(prefix + "/mtoken　交換メニューを開きます");
-                    sender.sendMessage(prefix + "/mtoken　token 交換に使用するトークンの残高を表示します");
+                    sender.sendMessage(prefix + "/mtoken 交換メニューを開きます");
+                    sender.sendMessage(prefix + "/mtoken token 交換に使用するトークンの残高を表示します");
                     if (sender.hasPermission("mtoken.op")) {
-                        sender.sendMessage(prefix + "/mtoken　tokenop 自分が所有する全てのトークンを表示します");
+                        sender.sendMessage(prefix + "/mtoken tokenop 自分が所有する全てのトークンを表示します");
                         sender.sendMessage(prefix + "/mtoken [on/off] システムをON/OFFします");
-                        sender.sendMessage(prefix + "/mtoken　tokenop [MCID/UUID] 指定したプレイヤーが所有する全てのトークンを表示します");
+                        sender.sendMessage(prefix + "/mtoken tokenop [MCID/UUID] 指定したプレイヤーが所有する全てのトークンを表示します");
                         sender.sendMessage("※プレイヤーがオンラインの場合、MCIDで実行した場合でもUUIDで検索します");
-                        sender.sendMessage(prefix + "/mtoken　edit 編集メニューを開きます");
-                        sender.sendMessage(prefix + "/mtoken　trade [on/off] 交換をON/OFFします");
-                        sender.sendMessage(prefix + "/mtoken　charge [on/off] チャージをON/OFFします");
-                        sender.sendMessage(prefix + "/mtoken　charge [数字] 自分のトークンを増減させます");
-                        sender.sendMessage(prefix + "/mtoken　charge [MCID/UUID] [数字] 指定したプレイヤーのトークンを増減させます");
-                        sender.sendMessage(prefix + "/mtoken　create [name] [cost] 交換先を作成します");
+                        sender.sendMessage(prefix + "/mtoken edit 編集メニューを開きます");
+                        sender.sendMessage(prefix + "/mtoken trade [on/off] 交換をON/OFFします");
+                        sender.sendMessage(prefix + "/mtoken charge [on/off] チャージをON/OFFします");
+                        sender.sendMessage(prefix + "/mtoken charge [数字] 自分のトークンを増減させます");
+                        sender.sendMessage(prefix + "/mtoken charge [MCID/UUID] [数字] 指定したプレイヤーのトークンを増減させます");
+                        sender.sendMessage(prefix + "/mtoken create [name] [cost] 交換先を作成します");
                     }
                     return true;
                 }
@@ -346,13 +364,21 @@ public class Command implements CommandExecutor, TabCompleter {
                 ResultSet res = mysql.query("SELECT id, update_at, mcid, uuid, value FROM token_data WHERE uuid = '"+ target.getUniqueId() +"' AND token_name = '"+ token_charge +"' LIMIT 1;");
                 if (res == null){
                     owner.sendMessage(Component.text(prefix + "DBの取得に失敗しました"));
-                    mysql.close();
+                    try {
+                        mysql.close();
+                    } catch (NullPointerException throwables) {
+                        throwables.printStackTrace();
+                    }
                     return;
                 }
                 LocalDateTime time = LocalDateTime.now();
                 // データなかった時処理
                 if (!res.next()){
-                    mysql.close();
+                    try {
+                        mysql.close();
+                    } catch (NullPointerException throwables) {
+                        throwables.printStackTrace();
+                    }
                     if (!mysql.execute("START TRANSACTION;" +
                             "INSERT INTO token_data (create_at, update_at, token_name, mcid, uuid, value) VALUES ('"+ time +"', '"+ time +"', '"+ token_charge +"', '"+ target.getName() + "', '"+ target.getUniqueId() +"', "+ amount +");" +
                             "INSERT INTO token_logs (time, token_data_id, mcid, uuid, diff, note) VALUES ('"+ time +"', (SELECT id FROM token_data WHERE uuid = '"+ target.getUniqueId() +"' AND token_name = '"+ token_charge +"' LIMIT 1), '"+ target.getName() +"', '"+ target.getUniqueId() +"', '"+ amount +"', '"+ owner.getName() +"による実行');" +
@@ -367,7 +393,11 @@ public class Command implements CommandExecutor, TabCompleter {
                 int id = res.getInt("id");
                 int value = res.getInt("value");
                 value += amount;
-                mysql.close();
+                try {
+                    mysql.close();
+                } catch (NullPointerException throwables) {
+                    throwables.printStackTrace();
+                }
                 // トランザクション処理
                 if (!mysql.execute("START TRANSACTION;" +
                         "UPDATE token_data SET update_at = '"+ time +"', mcid = '"+ target.getName() +"', value = "+ value +" WHERE id = "+ id +";" +
@@ -380,7 +410,11 @@ public class Command implements CommandExecutor, TabCompleter {
                 target.sendMessage(Component.text(prefix + "トークンを"+ amount +"獲得しました"));
             } catch (SQLException e) {
                 owner.sendMessage(Component.text(prefix + "DBの取得に失敗しました"));
-                mysql.close();
+                try {
+                    mysql.close();
+                } catch (NullPointerException throwables) {
+                    throwables.printStackTrace();
+                }
                 throw new RuntimeException(e);
             }
         });
@@ -393,7 +427,11 @@ public class Command implements CommandExecutor, TabCompleter {
             try{
                 ResultSet res = mysql.query("SELECT mcid, token_name, value FROM token_data WHERE "+ conditions +";");
                 if (!res.next()){
-                    mysql.close();
+                    try {
+                        mysql.close();
+                    } catch (NullPointerException throwables) {
+                        throwables.printStackTrace();
+                    }
                     sender.sendMessage(Component.text(prefix + "データがありません"));
                     return;
                 }
@@ -404,10 +442,19 @@ public class Command implements CommandExecutor, TabCompleter {
                     String mcid = res.getString("mcid");
                     sender.sendMessage(mcid +"："+ name +"："+ value);
                 } while (res.next());
+                try {
+                    mysql.close();
+                } catch (NullPointerException throwables) {
+                    throwables.printStackTrace();
+                }
             }
             catch (SQLException ex) {
                 sender.sendMessage(Component.text(prefix + "DBの取得に失敗しました"));
-                mysql.close();
+                try {
+                    mysql.close();
+                } catch (NullPointerException throwables) {
+                    throwables.printStackTrace();
+                }
                 throw new RuntimeException(ex);
             }
         });
