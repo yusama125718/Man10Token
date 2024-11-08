@@ -89,12 +89,12 @@ public class GUI {
 
                 // 全体制限変更
                 case 15:
-                    inv.setItem(i, GetItem(Material.BLUE_STAINED_GLASS_PANE, "全体での交換数の上限を変更する", 1));
+                    inv.setItem(i, GetItem(Material.BLUE_STAINED_GLASS_PANE, "全体での交換数の上限を変更する　設定値："+ t.max_all, 1));
                     break;
 
                 // 個人制限変更
                 case 24:
-                    inv.setItem(i, GetItem(Material.BLUE_STAINED_GLASS_PANE, "個人での交換数の上限を変更する", 1));
+                    inv.setItem(i, GetItem(Material.BLUE_STAINED_GLASS_PANE, "個人での交換数の上限を変更する　設定値："+ t.max_personal, 1));
                     break;
 
                 // 交換ボタン
@@ -105,7 +105,7 @@ public class GUI {
 
                 // token
                 case 33:
-                    inv.setItem(i, GetItem(Material.EMERALD, "必用トークンを編集する 必要トークン：" + t.cost, 1));
+                    inv.setItem(i, GetItem(Material.EMERALD, "必要トークンを編集する 必要トークン：" + t.cost, 1));
                     break;
 
                 // delete

@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -80,7 +81,7 @@ public class Command implements CommandExecutor, TabCompleter {
                     return true;
                 }
                 if (sender.hasPermission("mtoken.op") && args[0].equals("tokenop")){
-                    String conditions = "uuid = "+ ((Player) sender).getUniqueId();
+                    String conditions = "uuid = '"+ ((Player) sender).getUniqueId() +"'";
                     SendTokens(sender, conditions);
                     return true;
                 }
@@ -137,11 +138,11 @@ public class Command implements CommandExecutor, TabCompleter {
                 if (sender.hasPermission("mtoken.op") && args[0].equals("tokenop")){
                     String conditions = "";
                     // 16文字以上はUUIDとする
-                    if (args[1].length() > 16) conditions = "uuid = "+ args[1];
+                    if (args[1].length() > 16) conditions = "uuid = '"+ args[1] +"'";
                     else {
                         Player p = Bukkit.getPlayer(args[1]);
-                        if (p == null) conditions = "mcid = "+ args[1];
-                        else conditions = "uuid = "+ p.getUniqueId();
+                        if (p == null) conditions = "mcid = '"+ args[1] +"'";
+                        else conditions = "uuid = '"+ p.getUniqueId() +"'";
                     }
                     SendTokens(sender, conditions);
                     return true;
@@ -217,8 +218,8 @@ public class Command implements CommandExecutor, TabCompleter {
                     }
                     Player p;
                     // 16文字まではMCIDとして扱う
-                    if (args[1].length() <= 16) p = Bukkit.getPlayerExact(args[2]);
-                    else p = Bukkit.getPlayer(UUID.fromString(args[2]));
+                    if (args[1].length() <= 16) p = Bukkit.getPlayerExact(args[1]);
+                    else p = Bukkit.getPlayer(UUID.fromString(args[1]));
                     if (p == null){
                         sender.sendMessage(Component.text(prefix + "プレイヤーが見つかりませんでした"));
                         return true;
@@ -379,10 +380,10 @@ public class Command implements CommandExecutor, TabCompleter {
                     } catch (NullPointerException throwables) {
                         throwables.printStackTrace();
                     }
-                    if (!mysql.execute("START TRANSACTION;" +
-                            "INSERT INTO token_data (create_at, update_at, token_name, mcid, uuid, value) VALUES ('"+ time +"', '"+ time +"', '"+ token_charge +"', '"+ target.getName() + "', '"+ target.getUniqueId() +"', "+ amount +");" +
-                            "INSERT INTO token_logs (time, token_data_id, mcid, uuid, diff, note) VALUES ('"+ time +"', (SELECT id FROM token_data WHERE uuid = '"+ target.getUniqueId() +"' AND token_name = '"+ token_charge +"' LIMIT 1), '"+ target.getName() +"', '"+ target.getUniqueId() +"', '"+ amount +"', '"+ owner.getName() +"による実行');" +
-                            "COMMIT;")){
+                    if (!mysql.execute_withList(new ArrayList<>() {{
+                            add("INSERT INTO token_data (create_at, update_at, token_name, mcid, uuid, value) VALUES ('"+ time +"', '"+ time +"', '"+ token_charge +"', '"+ target.getName() + "', '"+ target.getUniqueId() +"', "+ amount +");");
+                            add("INSERT INTO token_logs (time, token_data_id, mcid, uuid, diff, note) VALUES ('"+ time +"', (SELECT id FROM token_data WHERE uuid = '"+ target.getUniqueId() +"' AND token_name = '"+ token_charge +"' LIMIT 1), '"+ target.getName() +"', '"+ target.getUniqueId() +"', '"+ amount +"', '"+ owner.getName() +"による実行');");
+                    }})){
                         owner.sendMessage(Component.text(prefix + "DBの保存に失敗しました"));
                         return;
                     }
@@ -399,10 +400,11 @@ public class Command implements CommandExecutor, TabCompleter {
                     throwables.printStackTrace();
                 }
                 // トランザクション処理
-                if (!mysql.execute("START TRANSACTION;" +
-                        "UPDATE token_data SET update_at = '"+ time +"', mcid = '"+ target.getName() +"', value = "+ value +" WHERE id = "+ id +";" +
-                        "INSERT INTO token_logs (time, token_data_id, mcid, uuid, diff, note) VALUES ('"+ time +"', '"+ id +"', '"+ target.getName() +"', '"+ target.getUniqueId() +"', '"+ amount +"', '"+ owner.getName() +"による実行');" +
-                        "COMMIT;")){
+                int result = value;
+                if (!mysql.execute_withList(new ArrayList<>() {{
+                        add("UPDATE token_data SET update_at = '" + time + "', mcid = '" + target.getName() + "', value = " + result + " WHERE id = " + id + ";");
+                        add("INSERT INTO token_logs (time, token_data_id, mcid, uuid, diff, note) VALUES ('" + time + "', '" + id + "', '" + target.getName() + "', '" + target.getUniqueId() + "', '" + amount + "', '" + owner.getName() + "による実行');");
+                    }})){
                     owner.sendMessage(Component.text(prefix + "更新に失敗しました"));
                     return;
                 }

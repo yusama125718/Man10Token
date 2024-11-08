@@ -2,6 +2,7 @@ package yusama125718.man10Token;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -17,6 +18,7 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 
 import static java.lang.Integer.parseInt;
 import static net.kyori.adventure.text.event.ClickEvent.suggestCommand;
@@ -65,7 +67,7 @@ public class Event implements Listener {
                     e.getWhoClicked().closeInventory();
                     return;
                 }
-                int id = parseInt(title.substring(19));
+                int id = parseInt(title.substring(18));
                 Man10Token.TradeItem target = items.get(id);
                 if (e.getRawSlot() == 31){
                     if (!target.state){
@@ -80,6 +82,7 @@ public class Event implements Listener {
                             ResultSet res = mysql.query("SELECT id, update_at, mcid, uuid, value FROM token_data WHERE uuid = '" + e.getWhoClicked().getUniqueId() + "' AND token_name = '" + token_charge + "' LIMIT 1;");
                             if (res == null) {
                                 e.getWhoClicked().sendMessage(Component.text(prefix + "DBの取得に失敗しました"));
+                                Bukkit.getScheduler().runTask(mtoken, () -> e.getWhoClicked().closeInventory());
                                 try {
                                     mysql.close();
                                 } catch (NullPointerException throwables) {
@@ -89,6 +92,7 @@ public class Event implements Listener {
                             }
                             if (!res.next()) {
                                 e.getWhoClicked().sendMessage(Component.text(prefix + "トークンデータが存在しません"));
+                                Bukkit.getScheduler().runTask(mtoken, () -> e.getWhoClicked().closeInventory());
                                 try {
                                     mysql.close();
                                 } catch (NullPointerException throwables) {
@@ -101,7 +105,7 @@ public class Event implements Listener {
                             mysql.close();
                             if (value < target.cost){
                                 e.getWhoClicked().sendMessage(Component.text(prefix + "トークンが不足しています"));
-                                e.getWhoClicked().closeInventory();
+                                Bukkit.getScheduler().runTask(mtoken, () -> e.getWhoClicked().closeInventory());
                                 return;
                             }
                             // 最大取引数が設定されている場合取引数を確認
@@ -117,12 +121,13 @@ public class Event implements Listener {
                                     }
                                     if ((target.max_all != 0 && global >= target.max_all) || (target.max_personal != 0 && personal >= target.max_personal)){
                                         e.getWhoClicked().sendMessage(Component.text(prefix + "取引数が最大数に達しています"));
-                                        e.getWhoClicked().closeInventory();
+                                        Bukkit.getScheduler().runTask(mtoken, () -> e.getWhoClicked().closeInventory());
                                         return;
                                     }
                                 }
                                 else {
                                     e.getWhoClicked().sendMessage(Component.text(prefix + "DBの取得に失敗しました"));
+                                    Bukkit.getScheduler().runTask(mtoken, () -> e.getWhoClicked().closeInventory());
                                     try {
                                         mysql.close();
                                     } catch (NullPointerException throwables) {
@@ -133,23 +138,26 @@ public class Event implements Listener {
                             }
                             value -= target.cost;
                             LocalDateTime time = LocalDateTime.now();
+                            int result = value;
                             // トランザクション処理で各データおよびログを保存
-                            if (!mysql.execute("START TRANSACTION;" +
-                                    "UPDATE token_data SET update_at = '"+ time +"', mcid = '"+ e.getWhoClicked().getName() +"', value = "+ value +" WHERE id = "+ token_id +";" +
-                                    "INSERT INTO token_logs (time, token_data_id, mcid, uuid, diff, note) VALUES ('"+ time +"', "+ token_id +", '"+ e.getWhoClicked().getName() +"', '"+ e.getWhoClicked().getUniqueId() +"', '"+ target.cost +"', '"+ target.name +"の交換');" +
-                                    "INSERT INTO trade_logs (time, token_data_id, mcid, uuid, token_logs_id, item_name) VALUES ('"+ time +"', "+ token_id +", '"+ e.getWhoClicked().getName() +"', '"+ e.getWhoClicked().getUniqueId() +"', '(SELECT id FROM token_logs WHERE uuid = '"+ e.getWhoClicked().getUniqueId() +"' AND token_id = '"+ token_id +"' AND time = '"+ time +"' LIMIT 1)', '"+ target.name +"');" +
-                                    "COMMIT;")) {
+                            if (!mysql.execute_withList(new ArrayList<>() {{
+                                add("UPDATE token_data SET update_at = '"+ time +"', mcid = '"+ e.getWhoClicked().getName() +"', value = "+ result +" WHERE id = "+ token_id +";");
+                                add("INSERT INTO token_logs (time, token_data_id, mcid, uuid, diff, note) VALUES ('"+ time +"', "+ token_id +", '"+ e.getWhoClicked().getName() +"', '"+ e.getWhoClicked().getUniqueId() +"', "+ target.cost +", '"+ target.name +"の交換');");
+                                add("INSERT INTO trade_logs (time, token_data_id, mcid, uuid, token_logs_id, item_name) VALUES ('"+ time +"', "+ token_id +", '"+ e.getWhoClicked().getName() +"', '"+ e.getWhoClicked().getUniqueId() +"', (SELECT id FROM token_logs WHERE uuid = '"+ e.getWhoClicked().getUniqueId() +"' AND token_data_id = "+ token_id +" AND time = '"+ time +"' LIMIT 1), '"+ target.name +"');");
+                            }})) {
                                 e.getWhoClicked().sendMessage(Component.text(prefix + "DBの保存に失敗しました"));
-                                e.getWhoClicked().closeInventory();
+                                Bukkit.getScheduler().runTask(mtoken, () -> e.getWhoClicked().closeInventory());
                                 return;
                             }
                             // アイテム付与
                             Bukkit.getScheduler().runTask(mtoken, () -> e.getWhoClicked().getInventory().addItem(target.item.clone()));
                             e.getWhoClicked().sendMessage(Component.text(prefix + "交換しました"));
+                            Bukkit.getScheduler().runTask(mtoken, () -> e.getWhoClicked().closeInventory());
                             return;
                         }
                         catch (SQLException ex) {
                             e.getWhoClicked().sendMessage(Component.text(prefix + "DBの取得に失敗しました"));
+                            Bukkit.getScheduler().runTask(mtoken, () -> e.getWhoClicked().closeInventory());
                             mysql.close();
                             throw new RuntimeException(ex);
                         }
@@ -277,9 +285,15 @@ public class Event implements Listener {
                             return;
                         }
                         Component c = inv.getItem(35).displayName();
-                        String s = "";
-                        if (c instanceof TextComponent text) s = text.content();
-                        int cost = parseInt(s);
+                        String s = PlainTextComponentSerializer.plainText().serialize(c);
+                        s = s.replaceAll("[^0-9]", "");
+                        int cost = 0;
+                        try {
+                            cost = parseInt(s);
+                        } catch (Exception exeption){
+                            e.getWhoClicked().sendMessage(Component.text(prefix + "エラーが発生しました"));
+                            return;
+                        }
                         File folder = new File(configfile.getAbsolutePath() + File.separator + name + ".yml");
                         YamlConfiguration yml = new YamlConfiguration();
                         yml.set("cost", cost);
@@ -288,7 +302,7 @@ public class Event implements Listener {
                         yml.set("max_all", 0);
                         yml.set("state", false);
                         yml.save(folder);
-                        items.add(new TradeItem(name + ".yml", false, inv.getItem(15), cost,  0, 0));
+                        items.add(new TradeItem(name + ".yml", false, inv.getItem(13), cost,  0, 0));
                         e.getWhoClicked().sendMessage(Component.text(prefix + "作成しました"));
                         e.getWhoClicked().closeInventory();
                         return;

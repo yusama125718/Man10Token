@@ -7,6 +7,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 import java.util.logging.Level;
 
 /**
@@ -197,5 +198,38 @@ public class MySQLManager
         } catch (SQLException var4) {
         }
 
+    }
+
+    ////////////////////////////////
+    //    ここから拡張部分 by yusama
+    ////////////////////////////////
+    //      ステートメント実行
+    ////////////////////////////////
+    public boolean execute_withList(List<String> query) throws SQLException {
+        this.MySQL = new MySQLFunc(this.HOST, this.DB, this.USER, this.PASS,this.PORT);
+        this.con = this.MySQL.open();
+        this.con.setAutoCommit(false);
+        if(this.con == null){
+            Bukkit.getLogger().info("failed to open MYSQL");
+            return false;
+        }
+        boolean ret = true;
+        if (debugMode){
+            for (String sql : query) plugin.getLogger().info("query:" + sql);
+        }
+
+        try {
+            this.st = this.con.createStatement();
+            for (String sql : query) this.st.execute(sql);
+            this.con.commit();
+        } catch (SQLException var3) {
+            this.plugin.getLogger().info("[" + this.conName + "] Error executing statement: " +var3.getErrorCode() +":"+ var3.getLocalizedMessage());
+            for (String sql : query) this.plugin.getLogger().info(sql);
+            ret = false;
+
+        }
+
+        this.close();
+        return ret;
     }
 }

@@ -85,7 +85,7 @@ public final class Man10Token extends JavaPlugin {
         if (configfile.listFiles() != null){
             for (File file : configfile.listFiles()){
                 YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
-                if (!config.isString("token") || !config.isItemStack("item") || !config.isBoolean("state") || !config.isInt("cost") || !config.isInt("max_personal") || !config.isInt("max_all")){
+                if (!config.isItemStack("item") || !config.isBoolean("state") || !config.isInt("cost") || !config.isInt("max_personal") || !config.isInt("max_all")){
                     Bukkit.broadcast(Component.text(prefix + file.getName() + "の読み込みに失敗しました"), "mtoken.op");
                     continue;
                 }
