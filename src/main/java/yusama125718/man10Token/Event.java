@@ -79,7 +79,7 @@ public class Event implements Listener {
                         MySQLManager mysql = new MySQLManager(mtoken, "man10_token");
                         try {
                             // トークン残高確認
-                            ResultSet res = mysql.query("SELECT id, update_at, mcid, uuid, value FROM token_data WHERE uuid = '" + e.getWhoClicked().getUniqueId() + "' AND token_name = '" + token_charge + "' LIMIT 1;");
+                            ResultSet res = mysql.query("SELECT id, update_at, mcid, uuid, value FROM token_data WHERE uuid = '" + e.getWhoClicked().getUniqueId() + "' AND token_name = '" + token_trade + "' LIMIT 1;");
                             if (res == null) {
                                 e.getWhoClicked().sendMessage(Component.text(prefix + "DBの取得に失敗しました"));
                                 Bukkit.getScheduler().runTask(mtoken, () -> e.getWhoClicked().closeInventory());

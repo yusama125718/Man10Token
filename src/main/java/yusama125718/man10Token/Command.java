@@ -205,7 +205,7 @@ public class Command implements CommandExecutor, TabCompleter {
                         sender.sendMessage(Component.text(prefix + "数値が不正です"));
                         return true;
                     }
-                    Charge((Player) sender, (Player) sender, amount);
+                    Charge(sender, (Player) sender, amount);
                     return true;
                 }
                 break;
@@ -231,7 +231,7 @@ public class Command implements CommandExecutor, TabCompleter {
                         sender.sendMessage(Component.text(prefix + "数値が不正です"));
                         return true;
                     }
-                    Charge((Player) sender, p, amount);
+                    Charge(sender, p, amount);
                     return true;
                 }
                 if (sender.hasPermission("mtoken.op") && args[0].equals("create")){
@@ -283,7 +283,7 @@ public class Command implements CommandExecutor, TabCompleter {
                     sender.sendMessage(Component.text(prefix + "変更しました"));
                     return true;
                 }
-                if (sender.hasPermission("mtoken.op") && args[1].equals("max_global")){
+                if (sender.hasPermission("mtoken.op") && args[0].equals("max_global")){
                     int id;
                     int max;
                     try {
@@ -315,7 +315,7 @@ public class Command implements CommandExecutor, TabCompleter {
                     sender.sendMessage(Component.text(prefix + "変更しました"));
                     return true;
                 }
-                if (sender.hasPermission("mtoken.op") && args[1].equals("max_personal")){
+                if (sender.hasPermission("mtoken.op") && args[0].equals("max_personal")){
                     int id;
                     int max;
                     try {
@@ -358,7 +358,7 @@ public class Command implements CommandExecutor, TabCompleter {
         return null;
     }
 
-    private static void Charge(Player owner, Player target, Integer amount){
+    private static void Charge(CommandSender owner, Player target, Integer amount){
         Thread th = new Thread(() -> {
             MySQLManager mysql = new MySQLManager(mtoken, "man10_token");
             try {
