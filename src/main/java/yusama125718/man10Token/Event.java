@@ -19,6 +19,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 import static java.lang.Integer.parseInt;
 import static net.kyori.adventure.text.event.ClickEvent.suggestCommand;
@@ -28,6 +30,8 @@ public class Event implements Listener {
     public Event(Man10Token plugin) {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
+
+    private static List<UUID> trading = new ArrayList<>();
 
     @EventHandler
     public void GUIClick(InventoryClickEvent e) throws IOException {
@@ -75,6 +79,9 @@ public class Event implements Listener {
                         e.getWhoClicked().closeInventory();
                         return;
                     }
+                    if (trading.contains(e.getWhoClicked().getUniqueId())) return;
+                    // 交換中のリストに加える
+                    trading.add(e.getWhoClicked().getUniqueId());
                     Thread th = new Thread(() -> {
                         MySQLManager mysql = new MySQLManager(mtoken, "man10_token");
                         try {
@@ -88,6 +95,7 @@ public class Event implements Listener {
                                 } catch (NullPointerException throwables) {
                                     throwables.printStackTrace();
                                 }
+                                trading.remove(e.getWhoClicked().getUniqueId());
                                 return;
                             }
                             if (!res.next()) {
@@ -98,6 +106,7 @@ public class Event implements Listener {
                                 } catch (NullPointerException throwables) {
                                     throwables.printStackTrace();
                                 }
+                                trading.remove(e.getWhoClicked().getUniqueId());
                                 return;
                             }
                             int token_id = res.getInt("id");
@@ -106,6 +115,7 @@ public class Event implements Listener {
                             if (value < target.cost){
                                 e.getWhoClicked().sendMessage(Component.text(prefix + "トークンが不足しています"));
                                 Bukkit.getScheduler().runTask(mtoken, () -> e.getWhoClicked().closeInventory());
+                                trading.remove(e.getWhoClicked().getUniqueId());
                                 return;
                             }
                             // 最大取引数が設定されている場合取引数を確認
@@ -122,6 +132,7 @@ public class Event implements Listener {
                                     if ((target.max_all != 0 && global >= target.max_all) || (target.max_personal != 0 && personal >= target.max_personal)){
                                         e.getWhoClicked().sendMessage(Component.text(prefix + "取引数が最大数に達しています"));
                                         Bukkit.getScheduler().runTask(mtoken, () -> e.getWhoClicked().closeInventory());
+                                        trading.remove(e.getWhoClicked().getUniqueId());
                                         return;
                                     }
                                 }
@@ -133,6 +144,7 @@ public class Event implements Listener {
                                     } catch (NullPointerException throwables) {
                                         throwables.printStackTrace();
                                     }
+                                    trading.remove(e.getWhoClicked().getUniqueId());
                                     return;
                                 }
                             }
@@ -147,18 +159,21 @@ public class Event implements Listener {
                             }})) {
                                 e.getWhoClicked().sendMessage(Component.text(prefix + "DBの保存に失敗しました"));
                                 Bukkit.getScheduler().runTask(mtoken, () -> e.getWhoClicked().closeInventory());
+                                trading.remove(e.getWhoClicked().getUniqueId());
                                 return;
                             }
                             // アイテム付与
                             Bukkit.getScheduler().runTask(mtoken, () -> e.getWhoClicked().getInventory().addItem(target.item.clone()));
                             e.getWhoClicked().sendMessage(Component.text(prefix + "交換しました"));
                             Bukkit.getScheduler().runTask(mtoken, () -> e.getWhoClicked().closeInventory());
+                            trading.remove(e.getWhoClicked().getUniqueId());
                             return;
                         }
                         catch (SQLException ex) {
                             e.getWhoClicked().sendMessage(Component.text(prefix + "DBの取得に失敗しました"));
                             Bukkit.getScheduler().runTask(mtoken, () -> e.getWhoClicked().closeInventory());
                             mysql.close();
+                            trading.remove(e.getWhoClicked().getUniqueId());
                             throw new RuntimeException(ex);
                         }
                     });
